@@ -27,7 +27,7 @@ for i in range(Height):
     screen.blit(BSurface,(0,(i*20)+30))
 for x in range(Width):
     screen.blit(DSurface,((x*20)+5,0))
-    screen.blit(ESurface,((x*20)+10,0))
+    screen.blit(ESurface,((x*20)+9,0))
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
