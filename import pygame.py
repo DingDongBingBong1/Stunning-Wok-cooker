@@ -74,69 +74,69 @@ pygame.quit()
 import time
 
 pygame.init()
-
 screen = pygame.display.set_mode((720, 720))
 
 img1 = pygame.image.load("Screenshot 2025-12-02 101145.png")
-img2 = pygame.image.load("Screenshot 2025-12-02 103546.png")
-img3 = pygame.image.load("Screenshot 2025-12-02 102908.png")
+img2 = pygame.image.load("Screenshot 2025-12-02 102908.png")
+img3 = pygame.image.load("Screenshot 2025-12-02 103546.png")
 
-x1 = -200
+# Image 1 (left -> right)
+x1 = -img1.get_width()
 y1 = 0
-speed1 = 4
+speed1 = 7
+image1_active = True
 
-x2 = 720
+# Image 2 (appears for a few seconds)
+x2 = 0
 y2 = 0
-speed2 = 1
 image2_active = False
+image2_start_time = 0
+image2_duration = 0.7 # seconds
 
-x3 = 0
+# Image 3 (moves right -> left)
+x3 = 100  # start at right edge
 y3 = 0
+speed3 = 7
 image3_active = False
-image3_start_time = 0
-image3_duration = 1
 
 running = True
 clock = pygame.time.Clock()
 
 while running:
     clock.tick(60)
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    x1 += speed1
-
-    if x1 >= 360 and not image3_active and not image2_active:
-        image3_active = True
-        image3_start_time = time.time()
-
-    if image3_active:
-        if time.time() - image3_start_time >= image3_duration:
-            image3_active = False
+    # Move Image 1
+    if image1_active:
+        x1 += speed1
+        if x1 >= 360:
+            image1_active = False
             image2_active = True
+            image2_start_time = time.time()  # start timer
 
+    # Show Image 2 for a few seconds
     if image2_active:
-        x2 -= speed2
-        if x2 < -img2.get_width() - 800:  
+        if time.time() - image2_start_time >= image2_duration:
             image2_active = False
-            
+            image3_active = True
+            x3 = 720  # reset Image 3 position at right edge
 
-    if x1 > 720:
-        x1 = -img1.get_width()
-        x2 = 720
-        image2_active = False
-        image3_active = False
-
-    screen.fill((0, 0, 0))
-    screen.blit(img1, (x1, y1))
-
+    # Move Image 3 (right -> left)
     if image3_active:
-        screen.blit(img3, (x3, y3))
+        x3 -= speed3
+        if x3 + img3.get_width() < 0:
+            image3_active = False
 
+    # Draw everything
+    screen.fill((0, 0, 0))
+    if image1_active:
+        screen.blit(img1, (x1, y1))
     if image2_active:
         screen.blit(img2, (x2, y2))
+    if image3_active:
+        screen.blit(img3, (x3, y3))
 
     pygame.display.update()
 
