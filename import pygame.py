@@ -71,72 +71,132 @@ while running:
 pygame.quit()
 
 
-import time
+import pygame, time
 
 pygame.init()
 screen = pygame.display.set_mode((720, 720))
+clock = pygame.time.Clock()
 
+# -------------------------------------------------------
+# Load Images
+# -------------------------------------------------------
 img1 = pygame.image.load("Screenshot 2025-12-02 101145.png")
 img2 = pygame.image.load("Screenshot 2025-12-02 102908.png")
 img3 = pygame.image.load("Screenshot 2025-12-02 103546.png")
 
-# Image 1 (left -> right)
-x1 = -img1.get_width()
-y1 = 0
-speed1 = 7
-image1_active = True
+# -------------------------------------------------------
+# Load Fog + flatten it
+# -------------------------------------------------------
+raw_fog = pygame.image.load("Fog.png")
 
-# Image 2 (appears for a few seconds)
-x2 = 0
-y2 = 0
-image2_active = False
-image2_start_time = 0
-image2_duration = 0.7 # seconds
+FLAT_HEIGHT = 80
+FLAT_WIDTH = 4000   # Must be wider than the screen for smooth overlap
 
-# Image 3 (moves right -> left)
-x3 = 100  # start at right edge
-y3 = 0
-speed3 = 7
-image3_active = False
+fog1 = pygame.transform.scale(raw_fog, (FLAT_WIDTH, FLAT_HEIGHT))
+fog2 = pygame.transform.scale(raw_fog, (FLAT_WIDTH, FLAT_HEIGHT))
+
+# These are used for top and bottom (copies)
+fog_top1 = fog1
+fog_top2 = fog2
+
+fog_bottom1 = fog1
+fog_bottom2 = fog2
+
+# -------------------------------------------------------
+# Fog Positions + Speed
+# -------------------------------------------------------
+fog_speed = 500
+
+# Bottom fog pair
+fog_bottom_x1 = 0
+fog_bottom_x2 = FLAT_WIDTH
+fog_bottom_y = 720 - FLAT_HEIGHT
+
+# Top fog pair
+fog_top_x1 = 0
+fog_top_x2 = FLAT_WIDTH-380
+fog_top_y = 0
+
+# -------------------------------------------------------
+# Main Animation Settings
+# -------------------------------------------------------
+state = "image1"
+
+x1 = -500
+x3 = 0
+
+speed = 5
+image2_start = 0
+image2_duration = 0.8
 
 running = True
-clock = pygame.time.Clock()
-
 while running:
-    clock.tick(60)
+    dt = clock.tick(60) / 1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # Move Image 1
-    if image1_active:
-        x1 += speed1
-        if x1 >= 360:
-            image1_active = False
-            image2_active = True
-            image2_start_time = time.time()  # start timer
+    # -------------------------------------------------------
+    # Fog Scroll Logic (top + bottom)
+    # -------------------------------------------------------
 
-    # Show Image 2 for a few seconds
-    if image2_active:
-        if time.time() - image2_start_time >= image2_duration:
-            image2_active = False
-            image3_active = True
-            x3 = 720  # reset Image 3 position at right edge
+    # Bottom fog scrolling
+    fog_bottom_x1 -= fog_speed
+    fog_bottom_x2 -= fog_speed
 
-    # Move Image 3 (right -> left)
-    if image3_active:
-        x3 -= speed3
-        if x3 + img3.get_width() < 0:
-            image3_active = False
+    # Loop bottom fog chunks
+    if fog_bottom_x1 + FLAT_WIDTH < 0:
+        fog_bottom_x1 = fog_bottom_x2 + FLAT_WIDTH
+    if fog_bottom_x2 + FLAT_WIDTH < 0:
+        fog_bottom_x2 = fog_bottom_x1 + FLAT_WIDTH
 
-    # Draw everything
+    # Top fog scrolling
+    fog_top_x1 -= fog_speed
+    fog_top_x2 -= fog_speed
+
+    # Loop top fog chunks
+    if fog_top_x1 + FLAT_WIDTH < 0:
+        fog_top_x1 = fog_top_x2 + FLAT_WIDTH
+    if fog_top_x2 + FLAT_WIDTH < 0:
+        fog_top_x2 = fog_top_x1 + FLAT_WIDTH
+
+    # -------------------------------------------------------
+    # Main Animation State Machine
+    # -------------------------------------------------------
+    if state == "image1":
+        x1 += speed
+        if x1 >= 200:
+            state = "image2"
+            image2_start = time.time()
+
+    elif state == "image2":
+        if time.time() - image2_start >= image2_duration:
+            state = "image3"
+
+    elif state == "image3":
+        x3 -= speed
+        if x3 + img3.get_width() < -400:
+            state = "done"
+
+    # -------------------------------------------------------
+    # Draw Everything
+    # -------------------------------------------------------
     screen.fill((0, 0, 0))
-    if image1_active:
-        screen.blit(img1, (x1, y1))
-    if image2_active:
-        screen.blit(img2, (x2, y2))
-    if image3_active:
-        screen.blit(img3, (x3, y3))
+
+    # Main images
+    if state == "image1":
+        screen.blit(img1, (x1, 0))
+    elif state == "image2":
+        screen.blit(img2, (0, 0))
+    elif state == "image3":
+        screen.blit(img3, (x3, 0))
+
+    # Fog: draw two strips on top + two on bottom
+    screen.blit(fog_top1, (fog_top_x1, fog_top_y))
+    screen.blit(fog_top2, (fog_top_x2, fog_top_y))
+
+    screen.blit(fog_bottom1, (fog_bottom_x1, fog_bottom_y))
+    screen.blit(fog_bottom2, (fog_bottom_x2, fog_bottom_y))
 
     pygame.display.update()
 
