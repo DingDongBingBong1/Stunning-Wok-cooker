@@ -302,3 +302,89 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+
+import pygame
+pygame.init()
+
+screen = pygame.display.set_mode((720, 230))
+clock = pygame.time.Clock()
+
+start_y = 10
+
+names = [
+    "1_sky.png","2_background.png","3_ice_castle.png","4_castle thingy.png",
+    "5 and 4.png","5_ground.png","7_snow.png","8_snow.png"
+]
+# speeds: horizontal, vertical
+speeds = [(6,0),(4,0),(0.25,0),(-2,0),(-10,0),(-4,0),(-3,6),(-3,6)]
+
+imgs = []
+sizes = []
+for n in names:
+    im = pygame.image.load(n).convert_alpha()
+    w,h = im.get_width(), im.get_height()
+    surf = pygame.Surface((w*2,h), pygame.SRCALPHA)
+    surf.blit(im,(0,0))
+    surf.blit(im,(w,0))
+    imgs.append(surf)
+    sizes.append((w*2,h))
+
+# starting positions
+pos = [[0,start_y] for _ in names]
+
+running = True
+while running:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            running = False
+
+    screen.fill((0,0,0))
+
+    for i, img in enumerate(imgs):
+        w, h = sizes[i]
+        x, y = pos[i]
+        sx, sy = speeds[i]
+
+        # Diagonal movement (both horizontal and vertical)
+        if sx != 0 and sy != 0:
+            # draw four copies for seamless loop
+            screen.blit(img, (x, y))            # main
+            screen.blit(img, (x + w, y))        # horizontal wrap
+            screen.blit(img, (x, y - h))        # vertical wrap
+            screen.blit(img, (x + w, y - h))    # diagonal corner
+        # Horizontal scrolling only
+        elif sx != 0:
+            if sx > 0:  # moving right
+                screen.blit(img, (x, y))
+                screen.blit(img, (x - w, y))
+            else:       # moving left
+                screen.blit(img, (x, y))
+                screen.blit(img, (x + w, y))
+        # Vertical scrolling only
+        elif sy != 0:
+            screen.blit(img, (x, y))
+            screen.blit(img, (x, y - h))  # second copy above
+        else:
+            screen.blit(img, (x, y))  # static layer
+
+        # Update positions
+        x += sx
+        y += sy
+
+        # Horizontal wrap
+        if sx > 0 and x >= w:
+            x -= w
+        elif sx < 0 and x <= -w:
+            x += w
+
+        # Vertical wrap
+        if y >= start_y + h:
+            y -= h
+
+        pos[i] = [x, y]
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
