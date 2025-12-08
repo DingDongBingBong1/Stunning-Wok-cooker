@@ -115,7 +115,7 @@ FLAT_HEIGHT = 80
 FLAT_WIDTH = 4000  # wide tiled texture
 
 fog_image = pygame.transform.scale(raw_fog, (FLAT_WIDTH, FLAT_HEIGHT))
-fog_speed = 200  # pixels per second (feel free to tweak)
+fog_speed = 100000  # pixels per second (feel free to tweak)
 
 # positions for two tiles for top and bottom
 fog_top_x1 = 0
